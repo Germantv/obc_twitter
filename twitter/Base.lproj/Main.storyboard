@@ -202,7 +202,7 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="RlQ-D9-Kdk" firstAttribute="trailing" secondItem="ugE-Ul-H9I" secondAttribute="trailing" id="DiY-0Z-KRY"/>
-                            <constraint firstItem="pGj-sa-aq5" firstAttribute="top" secondItem="RlQ-D9-Kdk" secondAttribute="bottom" id="Dlg-zd-Lm6"/>
+                            <constraint firstAttribute="bottom" secondItem="RlQ-D9-Kdk" secondAttribute="bottom" id="Dlg-zd-Lm6"/>
                             <constraint firstItem="RlQ-D9-Kdk" firstAttribute="top" secondItem="qax-2F-Vhk" secondAttribute="top" id="KX8-9H-qNd"/>
                             <constraint firstItem="RlQ-D9-Kdk" firstAttribute="leading" secondItem="ugE-Ul-H9I" secondAttribute="leading" id="VB8-Ws-VO3"/>
                         </constraints>

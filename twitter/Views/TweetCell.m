@@ -7,6 +7,10 @@
 //
 
 #import "TweetCell.h"
+#import "Tweet.h"
+#import "User.h"
+#import "UIImageView+AFNetworking.h"
+#import "APIManager.h"
 
 @implementation TweetCell
 
@@ -36,9 +40,16 @@
     self.createdAt.text = tweet.createdAtString;
     self.tweetText.text = tweet.text;
     
+    // setup favs, rt's, & replies counts
     self.favoriteCount.text = [NSString stringWithFormat:@"%d", tweet.favoriteCount];
     self.retweetCount.text = [NSString stringWithFormat:@"%d", tweet.retweetCount];
     self.replyCount.text = [NSString stringWithFormat:@"%d", tweet.replyCount];
+    
+    // configure image with AFNetworking method and custom User getter method
+    [self.profileImage setImageWithURL: [tweet.user getProfileImageURLString]];
+    self.profileImage.layer.cornerRadius = self.profileImage.frame.size.height / 2;
+    self.profileImage.layer.masksToBounds = YES;
+    self.profileImage.userInteractionEnabled = YES;
     
 }
 

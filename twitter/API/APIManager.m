@@ -48,6 +48,7 @@ static NSString * const consumerSecret = @"v2FiGLyuuVVnjuQ3iPiojtuueIoTjn6j05o60
     return self;
 }
 
+// Returns a collection of the most recent Tweets posted by the authenticating user and the users they follow.
 - (void)getHomeTimelineWithCompletion:(void(^)(NSArray *tweets, NSError *error))completion {
     
      [self GET:@"1.1/statuses/home_timeline.json"
@@ -70,5 +71,55 @@ static NSString * const consumerSecret = @"v2FiGLyuuVVnjuQ3iPiojtuueIoTjn6j05o60
         }
     }];
 }
+
+// Returns a collection of the most recent Tweets posted by the indicated by the screen_name or user_id parameters.
+- (void)getIndicatedUserTimelineWithCompletion:(void(^)(User *user, NSArray *tweets, NSError *error))completion {
+    
+     [self GET:@"1.1/statuses/user_timeline.json"
+    parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, NSArray *  _Nullable tweetDictionaries) {
+        // Manually cache the tweets. If the request fails, restore from cache if possible.
+        NSData *data = [NSKeyedArchiver archivedDataWithRootObject:tweetDictionaries];
+        [[NSUserDefaults standardUserDefaults] setValue:data forKey:@"user_tweets"];
+        NSMutableArray *tweets  = [Tweet tweetsWithArray:tweetDictionaries];
+        completion(nil, tweets, nil);
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        NSArray *tweetDictionaries = nil;
+        // Fetch tweets from cache if possible
+        NSData *data = [[NSUserDefaults standardUserDefaults] valueForKey:@"user_tweets"];
+        if (data != nil) {
+            tweetDictionaries = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+            NSMutableArray *tweets  = [Tweet tweetsWithArray:tweetDictionaries];
+            completion(nil, tweets, error);
+        } else {
+            completion(nil, error, nil);
+        }
+    }];
+}
+
+// Returns the 20 most recent mentions (Tweets containing a users’s @handle) for the authenticating user.
+- (void)getMentionsTimelineWithCompletion:(void(^)(NSArray *tweets, NSError *error))completion {
+    
+     [self GET:@"1.1/statuses/mentions_timeline.json"
+    parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, NSArray *  _Nullable tweetDictionaries) {
+        // Manually cache the tweets. If the request fails, restore from cache if possible.
+        NSData *data = [NSKeyedArchiver archivedDataWithRootObject:tweetDictionaries];
+        [[NSUserDefaults standardUserDefaults] setValue:data forKey:@"mention_tweets"];
+        NSMutableArray *tweets  = [Tweet tweetsWithArray:tweetDictionaries];
+        completion(tweets, nil);
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        NSArray *tweetDictionaries = nil;
+        // Fetch tweets from cache if possible
+        NSData *data = [[NSUserDefaults standardUserDefaults] valueForKey:@"mention_tweets"];
+        if (data != nil) {
+            tweetDictionaries = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+            NSMutableArray *tweets  = [Tweet tweetsWithArray:tweetDictionaries];
+            completion(tweets, error);
+        } else {
+            completion(nil, error);
+        }
+    }];
+}
+
+
 
 @end

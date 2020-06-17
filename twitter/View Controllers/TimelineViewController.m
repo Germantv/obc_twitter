@@ -11,13 +11,14 @@
 #import "Tweet.h"
 #import "TweetCell.h"
 
-@interface TimelineViewController () <UITableViewDelegate, UITableViewDataSource>
+@interface TimelineViewController () <UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate>
 
 // MARK: Outlets
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 
 // MARK: Properties
 @property (nonatomic, strong) NSMutableArray *tweets;
+@property (assign, nonatomic) BOOL isMoreDataLoading;
 
 @end
 
@@ -26,11 +27,23 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    // Initialize a UIRefreshControl
+    UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
+    [refreshControl addTarget:self action:@selector(beginRefresh:) forControlEvents:UIControlEventValueChanged];
+    // add refresh control to table view
+    [self.tableView insertSubview:refreshControl atIndex:0];
+    
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 140;
     
+    [self fetchTweets];
+
+}
+
+// MARK: Methods
+- (void)fetchTweets {
     // Get timeline
     [[APIManager shared] getHomeTimelineWithCompletion:^(NSArray *tweets, NSError *error) {
         if (tweets) {
@@ -41,6 +54,8 @@
                 NSLog(@"%@", tweet.entities);
             }
             
+            // update flag to indicate done requesting data
+            self.isMoreDataLoading = NO;
             [self.tableView reloadData];
 
         } else {
@@ -49,9 +64,40 @@
     }];
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (void)fetchMentions {
+    // Get mentions_timeline
+    [[APIManager shared] getMentionsTimelineWithCompletion:^(NSArray *tweets, NSError *error) {
+        if (tweets) {
+            NSLog(@"😎😎😎 Successfully loaded home timeline");
+            [self.tweets addObjectsFromArray:tweets];
+            
+            for (Tweet *tweet in self.tweets) {
+                NSLog(@"%@", tweet.entities);
+            }
+            
+            // update flag to indicate done requesting data
+            self.isMoreDataLoading = NO;
+            [self.tableView reloadData];
+
+        } else {
+            NSLog(@"😫😫😫 Error getting home timeline: %@", error.localizedDescription);
+        }
+    }];
+}
+
+  // Makes a network request to get updated data
+  // Updates the tableView with the new data
+  // Hides the RefreshControl
+- (void)beginRefresh:(UIRefreshControl *)refreshControl {
+    
+    // get new data
+    [self fetchTweets];
+    
+    // Reload the tableView now that there is new data
+    [self.tableView reloadData];
+
+    // Tell the refreshControl to stop spinning
+    [refreshControl endRefreshing];
 }
 
 /*
@@ -63,6 +109,23 @@
     // Pass the selected object to the new view controller.
 }
 */
+
+// MARK: ScrollView
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if(!self.isMoreDataLoading) {
+        // Calculate the position of one screen length before the bottom of the results
+        int scrollViewContentHeight = self.tableView.contentSize.height;
+        int scrollOffsetThreshold = scrollViewContentHeight - self.tableView.bounds.size.height;
+        
+        // When the user had scrolled past the threshold, start requesting
+        if(scrollView.contentOffset.y > scrollOffsetThreshold && self.tableView.isDragging) {
+            self.isMoreDataLoading = true;
+            
+            // Load more results
+            [self fetchMentions];
+        }
+    }
+}
 
 // MARK: TableView
 - (nonnull UITableViewCell *)tableView:(nonnull UITableView *)tableView cellForRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
