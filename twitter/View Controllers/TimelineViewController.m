@@ -7,11 +7,12 @@
 //
 
 #import "TimelineViewController.h"
+#import "ComposeViewController.h"
 #import "APIManager.h"
 #import "Tweet.h"
 #import "TweetCell.h"
 
-@interface TimelineViewController () <UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate>
+@interface TimelineViewController () <ComposeViewControllerDelegate, UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate>
 
 // MARK: Outlets
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
@@ -100,15 +101,15 @@
     [refreshControl endRefreshing];
 }
 
-/*
+
 #pragma mark - Navigation
 
-// In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+    UINavigationController *navigationController = [segue destinationViewController];
+    ComposeViewController *composeController = (ComposeViewController*)navigationController.topViewController;
+    composeController.delegate = self;
 }
-*/
+
 
 // MARK: ScrollView
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -143,6 +144,12 @@
     return self.tweets.count;
 }
 
+
+
+- (void)didTweet:(nonnull Tweet *)tweet {
+    [self.tweets insertObject:tweet atIndex:0];
+    [self.tableView reloadData];
+}
 
 
 @end
